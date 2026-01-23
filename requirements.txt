@@ -1,6 +1,7 @@
 fastapi
 uvicorn
+gunicorn
 psycopg2-binary
 python-jose
-passlib[bcrypt]
 python-dotenv
+passlib[bcrypt]
