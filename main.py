@@ -47,9 +47,11 @@ class ExpenseIn(BaseModel):
 
 # Create users table
 @app.on_event("startup")
-def create_table():
+def create_tables():
     conn = get_db()
     cur = conn.cursor()
+
+    # Create users table (fresh DB)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users(
         id SERIAL PRIMARY KEY,
@@ -59,9 +61,15 @@ def create_table():
         role TEXT NOT NULL DEFAULT 'user'
     )
     """)
+
+    # 🔥 MIGRATION for existing DB (THIS WAS MISSING)
+    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT")
+    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user'")
+
     conn.commit()
     cur.close()
     conn.close()
+
 
 class User(BaseModel):
     email: str
@@ -76,8 +84,11 @@ def register(user: User):
     if cur.fetchone():
         raise HTTPException(400, "User exists")
 
-    cur.execute("INSERT INTO users(email,password) VALUES(%s,%s)",
-                (user.email, hash_password(user.password)))
+    cur.execute("""
+        INSERT INTO users (name, email, password, role)
+        VALUES (%s, %s, %s, %s)
+    """, (user.email.split("@")[0], user.email, hash_password(user.password), "user"))
+
 
     conn.commit()
     cur.close()
