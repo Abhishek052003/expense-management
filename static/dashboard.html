@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Expense Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- ================= TOP BAR ================= -->
+<div class="topbar">
+  <h3>Expense Dashboard</h3>
+  <div>
+    <button class="secondary" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- ================= KPI SECTION ================= -->
+  <div id="kpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px"></div>
+
+  <!-- ================= USER DASHBOARD ================= -->
+  <div id="user-section" class="hide">
+
+    <h3 style="margin:30px 0 10px">Your Expenses</h3>
+
+    <!-- Approved -->
+    <div class="card">
+      <h4>Approved Expenses</h4>
+      <div class="table-wrap">
+        <table id="approved-table"></table>
+        <div class="empty-msg hide" id="approved-empty">
+          No approved expenses yet.
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending -->
+    <div class="card">
+      <h4>Pending Expenses</h4>
+      <div class="table-wrap">
+        <table id="pending-table"></table>
+        <div class="empty-msg hide" id="pending-empty">
+          No pending expenses.
+        </div>
+      </div>
+    </div>
+
+    <!-- Rejected -->
+    <div class="card">
+      <h4>Rejected Expenses</h4>
+      <div class="table-wrap">
+        <table id="rejected-table"></table>
+        <div class="empty-msg hide" id="rejected-empty">
+          No rejected expenses.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= ADMIN DASHBOARD ================= -->
+  <div id="admin-section" class="hide">
+
+    <!-- Filters -->
+    <div class="card">
+      <h4>Filters</h4>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">
+        <select id="f-user">
+          <option value="">All Users</option>
+        </select>
+        <select id="f-office">
+          <option value="">All Offices</option>
+        </select>
+        <select id="f-head">
+          <option value="">All Heads</option>
+        </select>
+        <select id="f-subhead">
+          <option value="">All Subheads</option>
+        </select>
+        <input type="date" id="f-date">
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+      <div class="card">
+        <h4>Expense by Head</h4>
+        <select id="head-top">
+          <option value="3">Top 3</option>
+          <option value="5">Top 5</option>
+        </select>
+        <canvas id="head-chart"></canvas>
+      </div>
+
+      <div class="card">
+        <h4>Expense by Office</h4>
+        <select id="office-top">
+          <option value="3">Top 3</option>
+          <option value="5">Top 5</option>
+        </select>
+        <canvas id="office-chart"></canvas>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/dashboard.js"></script>
+</body>
+</html>

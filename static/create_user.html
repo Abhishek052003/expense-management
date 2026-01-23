@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create User</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+  <h3>Create New User</h3>
+  <input id="name" placeholder="Full Name">
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <select id="role">
+    <option value="user">User</option>
+    <option value="admin">Admin</option>
+  </select>
+  <button onclick="createUser()">Create</button>
+  <p id="msg"></p>
+</div>
+
+<script>
+async function createUser(){
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const role = document.getElementById("role").value;
+
+  if (!name || !email || !password) {
+    msg.innerText = "Name, Email and Password are required";
+    return;
+  }
+
+  const res = await fetch("/api/admin/create-user", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      name: name,
+      email: email,
+      password: password,
+      role: role
+    })
+  });
+
+  const data = await res.json();
+  msg.innerText = data.msg || data.detail;
+
+  if (res.ok) {
+    document.getElementById("name").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("password").value = "";
+  }
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Expense Form</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <button onclick="goDashboard()">View Dashboard</button>
+  <button id="createUserBtn" class="hide" onclick="goCreateUser()">Register User</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<div class="container">
+  <h3>Submit Expense</h3>
+
+  <input type="date" id="expense_date">
+
+  <select id="client">
+    <option value="">Select Client</option>
+    <option>Fiserv</option>
+    <option>Pinelabs</option>
+    <option>TVS</option>
+    <option>Bajaj</option>
+    <option>HDFC</option>
+    <option>RN Fashion</option>
+  </select>
+
+  <select id="office_name">
+    <option value="">Select Office</option>
+    <option>Delhi</option>
+    <option>Kolkata</option>
+    <option>Bangalore</option>
+    <option>Chennai</option>
+    <option>Hyderabad</option>
+    <option>Thane</option>
+    <option>Vasai</option>
+    <option>Andheri</option>
+  </select>
+
+  <select id="head" onchange="loadSubheads()">
+    <option value="">Select Expense Head</option>
+    <option>Connections</option>
+    <option>Conveyance</option>
+    <option>Other</option>
+    <option>Pickup & Delivery</option>
+    <option>Urgent Delivery</option>
+    <option>Office Expense</option>
+    <option>Office stationary</option>
+    <option>Porter</option>
+  </select>
+
+  <select id="subhead">
+    <option value="">Select Subhead</option>
+  </select>
+
+  <input id="from_location" placeholder="From">
+  <input id="to_location" placeholder="To">
+  <input id="weight" placeholder="Weight">
+  <input id="amount" placeholder="Amount">
+  <input id="awb" placeholder="AWB">
+  <input id="vehicle_type" placeholder="Vehicle Type">
+  <input id="remark" placeholder="Remark">
+
+  <button onclick="submitExpense()">Submit Expense</button>
+  <p id="msg"></p>
+</div>
+
+<script>
+const subheadMap = {
+  "Connections": ["Post connections","DTDC connections","Professional connections","Franch connections","RTC connections"],
+  "Conveyance": ["Delivery conveyance","Monthly Travelling conveyance"],
+  "Other": ["Other","Petrol","Snacks","Lunch","Tea","Maintenance","Loading/Unloading"],
+  "Pickup & Delivery": ["Pickup & Delivery"],
+  "Urgent Delivery": ["Urgent Delivery"],
+  "Office Expense": ["Light Bill","Water Bill","Wifi Bill","Cleaning","Other"],
+  "Office stationary": ["MT Bags","Tape","Other"],
+  "Porter": ["Porter"]
+};
+
+async function loadUser(){
+  const res = await fetch("/me");
+  if(res.status !== 200){
+    window.location.href="/static/login.html";
+    return;
+  }
+  const user = await res.json();
+  if(user.role === "admin"){
+    document.getElementById("createUserBtn").classList.remove("hide");
+  }
+}
+
+function loadSubheads(){
+  const head = document.getElementById("head").value;
+  const sub = document.getElementById("subhead");
+  sub.innerHTML = "<option value=''>Select Subhead</option>";
+  if(subheadMap[head]){
+    subheadMap[head].forEach(s=>{
+      const opt = document.createElement("option");
+      opt.text = s;
+      sub.appendChild(opt);
+    });
+  }
+}
+
+async function submitExpense(){
+  const head = document.getElementById("head").value;
+
+  if(["Porter","Urgent Delivery","Pickup & Delivery"].includes(head)){
+    if(!from_location.value || !to_location.value || !weight.value || !awb.value){
+      msg.innerText = "From, To, Weight, AWB are mandatory for this expense type.";
+      return;
+    }
+  }
+
+  const payload = {
+    expense_date: expense_date.value || null,
+    client: client.value,
+    office_name: office_name.value,
+    head: head,
+    subhead: subhead.value,
+    from_location: from_location.value,
+    to_location: to_location.value,
+    weight: weight.value || null,
+    amount: amount.value,
+    awb: awb.value,
+    remark: remark.value,
+    vehicle_type: vehicle_type.value
+  };
+
+  const res = await fetch("/api/expenses/submit",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  msg.innerText = data.msg || data.detail;
+}
+
+function goDashboard(){
+  window.location.href="/static/dashboard.html";
+}
+
+function goCreateUser(){
+  window.location.href="/static/create_user.html";
+}
+
+function logout(){
+  document.cookie="access_token=; Max-Age=0; path=/";
+  window.location.href="/static/login.html";
+}
+
+loadUser();
+</script>
+
+</body>
+</html>
