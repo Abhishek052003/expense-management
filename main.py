@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timedelta
 from email_utils import send_approval_email
 import os
+from fastapi.responses import RedirectResponse
 
 BASE_URL = os.getenv("BASE_URL", "")
 ENV = os.getenv("ENV", "development")
@@ -18,6 +19,10 @@ IS_PROD = ENV == "production"
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/static/login.html")
 
 class CreateUserIn(BaseModel):
     name: str
