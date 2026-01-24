@@ -468,19 +468,24 @@ def admin_filters(current_user=Depends(get_current_user)):
     conn = get_db()
     cur = conn.cursor()
 
-    # Users (id + email)
+    # ✅ USERS — FIXED
     cur.execute("""
-        SELECT DISTINCT u.id, COALESCE(u.name, u.email)
-        FROM users u
-        JOIN expenses e ON e.created_by = u.id
-        ORDER BY COALESCE(u.name, u.email)
+        SELECT id, COALESCE(name, email)
+        FROM users
+        ORDER BY COALESCE(name, email)
     """)
     users = [{"id": r[0], "label": r[1]} for r in cur.fetchall()]
 
     # Offices
     cur.execute("""
         SELECT DISTINCT office_name
-        FROM expenses
+        FROM (
+            SELECT office_name FROM expenses
+            UNION
+            SELECT office_name FROM pending_expenses
+            UNION
+            SELECT office_name FROM rejected_expenses
+        ) t
         WHERE office_name IS NOT NULL
         ORDER BY office_name
     """)
@@ -489,7 +494,13 @@ def admin_filters(current_user=Depends(get_current_user)):
     # Heads
     cur.execute("""
         SELECT DISTINCT head
-        FROM expenses
+        FROM (
+            SELECT head FROM expenses
+            UNION
+            SELECT head FROM pending_expenses
+            UNION
+            SELECT head FROM rejected_expenses
+        ) t
         WHERE head IS NOT NULL
         ORDER BY head
     """)
@@ -498,7 +509,13 @@ def admin_filters(current_user=Depends(get_current_user)):
     # Subheads
     cur.execute("""
         SELECT DISTINCT subhead
-        FROM expenses
+        FROM (
+            SELECT subhead FROM expenses
+            UNION
+            SELECT subhead FROM pending_expenses
+            UNION
+            SELECT subhead FROM rejected_expenses
+        ) t
         WHERE subhead IS NOT NULL
         ORDER BY subhead
     """)
@@ -513,6 +530,7 @@ def admin_filters(current_user=Depends(get_current_user)):
         "heads": heads,
         "subheads": subheads
     }
+
 
 @app.get("/api/dashboard/admin/pie/head")
 def admin_pie_head(
