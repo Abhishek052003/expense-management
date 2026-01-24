@@ -1,37 +1,62 @@
-import os, smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from dotenv import load_dotenv
+import os
+import requests
 
-load_dotenv()
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+FROM_EMAIL = os.getenv("SMTP_USER")  # reuse your verified email
 
-SMTP_HOST = os.getenv("SMTP_HOST")
-SMTP_PORT = int(os.getenv("SMTP_PORT"))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASS = os.getenv("SMTP_PASS")
+def send_approval_email(to_emails, approve_url, reject_url, expense, submitted_by):
+    if not SENDGRID_API_KEY:
+        raise RuntimeError("SENDGRID_API_KEY not set")
 
-def send_approval_email(to_list, approve_url, reject_url, payload, submitted_by):
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"Expense Approval Required – {payload.client}"
-    msg["From"] = SMTP_USER
-    msg["To"] = ",".join(to_list)
+    subject = "Expense Approval Required"
 
-    html = f"""
-    <h2>New Expense Submitted</h2>
-    <b>Submitted By:</b> {submitted_by}<br><br>
+    html_content = f"""
+    <h3>New Expense Submitted</h3>
+    <p><b>Submitted by:</b> {submitted_by}</p>
+    <p><b>Client:</b> {expense.client}</p>
+    <p><b>Office:</b> {expense.office_name}</p>
+    <p><b>Head:</b> {expense.head}</p>
+    <p><b>Amount:</b> {expense.amount}</p>
 
-    <b>Client:</b> {payload.client}<br>
-    <b>Amount:</b> {payload.amount}<br>
-    <b>Head:</b> {payload.head}<br><br>
+    <br>
 
-    <a href="{approve_url}" style="padding:10px 18px;background:#22c55e;color:white;text-decoration:none;border-radius:5px;">APPROVE</a>
+    <a href="{approve_url}"
+       style="padding:10px 15px;background:green;color:white;text-decoration:none;">
+       APPROVE
+    </a>
+
     &nbsp;&nbsp;
-    <a href="{reject_url}" style="padding:10px 18px;background:#ef4444;color:white;text-decoration:none;border-radius:5px;">REJECT</a>
+
+    <a href="{reject_url}"
+       style="padding:10px 15px;background:red;color:white;text-decoration:none;">
+       REJECT
+    </a>
     """
 
-    msg.attach(MIMEText(html, "html"))
+    payload = {
+        "personalizations": [
+            {
+                "to": [{"email": e} for e in to_emails],
+                "subject": subject
+            }
+        ],
+        "from": {"email": FROM_EMAIL},
+        "content": [
+            {
+                "type": "text/html",
+                "value": html_content
+            }
+        ]
+    }
 
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-        server.starttls()
-        server.login(SMTP_USER, SMTP_PASS)
-        server.sendmail(SMTP_USER, to_list, msg.as_string())
+    response = requests.post(
+        "https://api.sendgrid.com/v3/mail/send",
+        headers={
+            "Authorization": f"Bearer {SENDGRID_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json=payload
+    )
+
+    if response.status_code not in (200, 202):
+        raise RuntimeError(f"SendGrid error: {response.status_code} {response.text}")

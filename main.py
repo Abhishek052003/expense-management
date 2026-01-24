@@ -223,13 +223,17 @@ def submit_expense(data: ExpenseIn, current_user=Depends(get_current_user)):
     reject_url  = f"{BASE_URL}/review/reject/{reject_token}"
 
 
-    send_approval_email(
-        emails,
-        approve_url,
-        reject_url,
-        data,
-        current_user["email"]
-    )
+    try:
+        send_approval_email(
+            emails,
+            approve_url,
+            reject_url,
+            data,
+            current_user["email"]
+        )
+    except Exception as e:
+        print("⚠️ Approval email failed:", e)
+
     # ------------------------------------------------
 
     conn.commit()
