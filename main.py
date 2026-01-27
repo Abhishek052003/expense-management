@@ -477,37 +477,33 @@ def admin_filters(
     cur = conn.cursor()
 
     # ----------------------------
-    # Build dynamic WHERE clause
+    # Base WHERE (never breaks)
     # ----------------------------
-    conditions = []
+    where_clause = "WHERE 1=1"
     values = []
 
     if user not in (None, ""):
-        conditions.append("created_by = %s")
+        where_clause += " AND created_by = %s"
         values.append(int(user))
 
     if office not in (None, ""):
-        conditions.append("office_name = %s")
+        where_clause += " AND office_name = %s"
         values.append(office)
 
     if head not in (None, ""):
-        conditions.append("head = %s")
+        where_clause += " AND head = %s"
         values.append(head)
 
     if subhead not in (None, ""):
-        conditions.append("subhead = %s")
+        where_clause += " AND subhead = %s"
         values.append(subhead)
 
     if date not in (None, ""):
-        conditions.append("expense_date = %s")
+        where_clause += " AND expense_date = %s"
         values.append(date)
 
-    where_clause = ""
-    if conditions:
-        where_clause = "WHERE " + " AND ".join(conditions)
-
     # ----------------------------
-    # USERS (not cascading)
+    # USERS (always full list)
     # ----------------------------
     cur.execute("""
         SELECT DISTINCT u.id, COALESCE(u.name, u.email)
@@ -562,6 +558,7 @@ def admin_filters(
         "heads": heads,
         "subheads": subheads
     }
+
 
 
 @app.get("/api/dashboard/admin/pie/head")
