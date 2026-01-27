@@ -466,6 +466,8 @@ def admin_filters(
     user: str | None = None,
     office: str | None = None,
     head: str | None = None,
+    subhead: str | None = None,
+    date: str | None = None,
     current_user=Depends(get_current_user)
 ):
     if current_user["role"] != "admin":
@@ -474,61 +476,80 @@ def admin_filters(
     conn = get_db()
     cur = conn.cursor()
 
+    # ----------------------------
+    # Build dynamic WHERE clause
+    # ----------------------------
     conditions = []
     values = []
 
     if user not in (None, ""):
-        conditions.append("e.created_by = %s")
+        conditions.append("created_by = %s")
         values.append(int(user))
 
     if office not in (None, ""):
-        conditions.append("e.office_name = %s")
+        conditions.append("office_name = %s")
         values.append(office)
 
     if head not in (None, ""):
-        conditions.append("e.head = %s")
+        conditions.append("head = %s")
         values.append(head)
 
-    base_where = ""
-    if conditions:
-        base_where = "WHERE " + " AND ".join(conditions)
+    if subhead not in (None, ""):
+        conditions.append("subhead = %s")
+        values.append(subhead)
 
-    # ✅ USERS — only those who have APPROVED expenses
+    if date not in (None, ""):
+        conditions.append("expense_date = %s")
+        values.append(date)
+
+    where_clause = ""
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+    # ----------------------------
+    # USERS (not cascading)
+    # ----------------------------
     cur.execute("""
         SELECT DISTINCT u.id, COALESCE(u.name, u.email)
-        FROM expenses e
-        JOIN users u ON u.id = e.created_by
+        FROM users u
+        JOIN expenses e ON e.created_by = u.id
         ORDER BY COALESCE(u.name, u.email)
     """)
     users = [{"id": r[0], "label": r[1]} for r in cur.fetchall()]
 
-    # ✅ OFFICES — cascading
+    # ----------------------------
+    # OFFICES (cascading)
+    # ----------------------------
     cur.execute(f"""
-        SELECT DISTINCT e.office_name
-        FROM expenses e
-        {base_where}
-        {"AND" if base_where else "WHERE"} e.office_name IS NOT NULL
-        ORDER BY e.office_name
+        SELECT DISTINCT office_name
+        FROM expenses
+        {where_clause}
+        AND office_name IS NOT NULL
+        ORDER BY office_name
     """, values)
     offices = [r[0] for r in cur.fetchall()]
 
-    # ✅ HEADS — cascading
+    # ----------------------------
+    # HEADS (cascading)
+    # ----------------------------
     cur.execute(f"""
-        SELECT DISTINCT e.head
-        FROM expenses e
-        {base_where}
-        {"AND" if base_where else "WHERE"} e.head IS NOT NULL
-        ORDER BY e.head
+        SELECT DISTINCT head
+        FROM expenses
+        {where_clause}
+        AND head IS NOT NULL
+        ORDER BY head
     """, values)
     heads = [r[0] for r in cur.fetchall()]
 
-    # ✅ SUBHEADS — cascading
+    # ----------------------------
+    # SUBHEADS (cascading)
+    # ----------------------------
     cur.execute(f"""
-        SELECT DISTINCT e.subhead
-        FROM expenses e
-        {base_where}
-        {"AND" if base_where else "WHERE"} e.subhead IS NOT NULL
-        ORDER BY e.subhead
+        SELECT DISTINCT subhead
+        FROM expenses
+        {where_clause}
+        AND subhead IS NOT NULL
+        ORDER BY subhead
     """, values)
     subheads = [r[0] for r in cur.fetchall()]
 
@@ -541,6 +562,7 @@ def admin_filters(
         "heads": heads,
         "subheads": subheads
     }
+
 
 @app.get("/api/dashboard/admin/pie/head")
 def admin_pie_head(
