@@ -229,7 +229,8 @@ def submit_expense(data: ExpenseIn, current_user=Depends(get_current_user)):
             approve_url,
             reject_url,
             data,
-            current_user["email"]
+            submitted_by_name=current_user["name"],
+            submitted_by_email=current_user["email"]
         )
     except Exception as e:
         print("⚠️ Approval email failed:", e)
