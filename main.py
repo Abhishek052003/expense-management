@@ -559,6 +559,126 @@ def admin_filters(
         "subheads": subheads
     }
 
+@app.get("/api/admin/pending-expenses")
+def get_pending_expenses(current_user=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(403, "Admins only")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT 
+            p.id,
+            u.name,
+            u.email,
+            p.client,
+            p.office_name,
+            p.head,
+            p.subhead,
+            p.amount,
+            p.expense_date
+        FROM pending_expenses p
+        JOIN users u ON u.id = p.created_by
+        ORDER BY p.id DESC
+    """)
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return [
+        {
+            "pending_id": r[0],
+            "submitted_by_name": r[1],
+            "submitted_by_email": r[2],
+            "client": r[3],
+            "office": r[4],
+            "head": r[5],
+            "subhead": r[6],
+            "amount": r[7],
+            "expense_date": r[8],
+        }
+        for r in rows
+    ]
+
+@app.post("/api/admin/pending-expenses/{pending_id}/approve")
+def admin_approve_expense(pending_id: int, current_user=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(403, "Admins only")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM pending_expenses WHERE id=%s", (pending_id,))
+    row = cur.fetchone()
+
+    if not row:
+        raise HTTPException(400, "Expense already processed")
+
+    cols = [d[0] for d in cur.description]
+    data = dict(zip(cols, row))
+
+    cur.execute("""
+        INSERT INTO expenses (
+            expense_date, client, office_name, head, subhead,
+            from_location, to_location, weight, amount, awb,
+            remark, vehicle_type, created_by
+        )
+        VALUES (
+            %(expense_date)s, %(client)s, %(office_name)s, %(head)s, %(subhead)s,
+            %(from_location)s, %(to_location)s, %(weight)s, %(amount)s, %(awb)s,
+            %(remark)s, %(vehicle_type)s, %(created_by)s
+        )
+    """, data)
+
+    cur.execute("DELETE FROM pending_expenses WHERE id=%s", (pending_id,))
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    return {"msg": "Expense approved"}
+
+@app.post("/api/admin/pending-expenses/{pending_id}/reject")
+def admin_reject_expense(pending_id: int, current_user=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(403, "Admins only")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM pending_expenses WHERE id=%s", (pending_id,))
+    row = cur.fetchone()
+
+    if not row:
+        raise HTTPException(400, "Expense already processed")
+
+    cols = [d[0] for d in cur.description]
+    data = dict(zip(cols, row))
+
+    cur.execute("""
+        INSERT INTO rejected_expenses (
+            expense_date, client, office_name, head, subhead,
+            from_location, to_location, weight, amount, awb,
+            remark, vehicle_type, created_by
+        )
+        VALUES (
+            %(expense_date)s, %(client)s, %(office_name)s, %(head)s, %(subhead)s,
+            %(from_location)s, %(to_location)s, %(weight)s, %(amount)s, %(awb)s,
+            %(remark)s, %(vehicle_type)s, %(created_by)s
+        )
+    """, data)
+
+    cur.execute("DELETE FROM pending_expenses WHERE id=%s", (pending_id,))
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    return {"msg": "Expense rejected"}
+
+
 
 
 @app.get("/api/dashboard/admin/pie/head")
