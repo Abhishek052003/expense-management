@@ -173,7 +173,7 @@ def create_user(data: CreateUserIn, current_user=Depends(get_current_user)):
 @app.post("/api/expenses/submit")
 def submit_expense(data: ExpenseIn, current_user=Depends(get_current_user)):
 
-    if data.head in ["Porter", "Urgent Delivery", "Pickup & Delivery"]:
+    if data.head in ["Porter", "Urgent Delivery", "Pickup & Delivery","Connections"]:
         if not all([data.from_location, data.to_location, data.weight, data.amount, data.awb]):
             raise HTTPException(
                 400,
