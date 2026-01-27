@@ -10,6 +10,8 @@ window.onload = async () => {
   const me = await fetchMe();
   await loadKPIs();
 
+  await attachPendingClickIfAdmin();
+
   if (me.role === "admin") {
     document.getElementById("admin-section").classList.remove("hide");
 
@@ -59,9 +61,16 @@ async function loadKPIs(){
   kpis.forEach(k => {
     const div = document.createElement("div");
     div.className = "card center";
+
+  // 👇 Make Pending KPI identifiable
+    if (k[0] === "Pending") {
+      div.id = "pendingCard";
+    }
+
     div.innerHTML = `<h4>${k[0]}</h4><h2>${k[1]}</h2>`;
     box.appendChild(div);
   });
+
 }
 
 
@@ -221,3 +230,23 @@ async function loadHeadPie(){
   );
 }
 
+async function attachPendingClickIfAdmin() {
+  try {
+    const me = await fetchMe();
+
+    if (me.role === "admin") {
+      const pendingCard = document.getElementById("pendingCard");
+
+      if (pendingCard) {
+        pendingCard.style.cursor = "pointer";
+        pendingCard.title = "View pending approvals";
+
+        pendingCard.addEventListener("click", () => {
+          window.location.href = "/static/pending.html";
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Failed to attach pending click", err);
+  }
+}
