@@ -37,6 +37,7 @@
     <option>Thane</option>
     <option>Vasai</option>
     <option>Andheri</option>
+    <option>Pune</option>
   </select>
 
   <select id="head" onchange="loadSubheads()">
@@ -69,14 +70,15 @@
 
 <script>
 const subheadMap = {
-  "Connections": ["Post connections","DTDC connections","Professional connections","Franch connections","RTC connections"],
-  "Conveyance": ["Delivery conveyance","Monthly Travelling conveyance"],
-  "Other": ["Other","Petrol","Snacks","Lunch","Tea","Maintenance","Loading/Unloading"],
-  "Pickup & Delivery": ["Pickup & Delivery"],
+  "Connections": ["Post Connections","DTDC Connections","Professional Connections","Franch Connections","RTC Connections","Bhoomi Connections","DSK Connections","Connections","ST Connections"],
+  "Conveyance": ["Delivery conveyance","Monthly Travelling conveyance","Travelling conveyance"],
+  "Other": ["Other","Petrol","Snacks","Lunch","Tea","Maintenance","Loading/Unloading","Service","DCOM Recharge","Prints"],
+  "Pickup & Delivery": ["Pickup & Delivery","Rev Pickup"],
   "Urgent Delivery": ["Urgent Delivery"],
-  "Office Expense": ["Light Bill","Water Bill","Wifi Bill","Cleaning","Other"],
-  "Office stationary": ["MT Bags","Tape","Other"],
-  "Porter": ["Porter"]
+  "Office Expense": ["Light Bill","Water Bill","Wifi Bill","Cleaning","Other","Tea Bill"],
+  "Office stationary": ["MT Bags","Tape","Other","A4 Paper","Stationary"],
+  "Porter": ["Porter"],
+  "Packer":["Packers"]
 };
 
 async function loadUser(){
